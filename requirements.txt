@@ -1,0 +1,40 @@
+# ==============================================================================
+# SECURE AUTHENTICATION PROTOCOL - PINNED DEPENDENCIES
+# ==============================================================================
+
+# Core Web Application Framework
+Flask==3.1.3
+Werkzeug==3.1.9
+Jinja2==3.1.6
+itsdangerous==2.2.0
+click==8.5.0
+blinker==1.9.0
+MarkupSafe==3.0.4
+
+# Cryptography & Key Management (X.509 TLS Certificates, Primitives)
+cryptography==50.0.2
+cffi==2.1.1
+pycparser==3.0
+
+# Password Hashing & Key Hardening (Argon2id)
+argon2-cffi==25.1.0
+argon2-cffi-bindings==26.1.0
+
+# Environment Configuration
+python-dotenv==1.2.4
+
+# Automated Security & Protocol Testing Suite
+pytest==9.1.1
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.6.0
+Pygments==2.21.0
+colorama==0.4.6
+
+# HTTP Client for Attack Demonstrations and Automated Integration Tests
+requests==2.34.2
+urllib3==2.8.0
+certifi==2026.7.22
+charset-normalizer==3.5.2
+idna==3.20
+

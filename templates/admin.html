@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Server-Side Admin & Threat Console &bull; Secure Authentication Protocol{% endblock %}
+
+{% block content %}
+<div class="card margin-b-2">
+    <div class="card-header dashboard-header-bar">
+        <div>
+            <h1 class="card-title">🖥️ Server-Side Security & Threat Intelligence Console</h1>
+            <p class="card-subtitle">Server telemetry, cryptographic verifiers, live challenge monitor, and STRIDE threat matrix</p>
+        </div>
+        <div class="dashboard-btn-group">
+            <button id="tab-btn-threats" class="btn btn-primary admin-tab-btn">🛡️ Threat Model</button>
+            <button id="tab-btn-verifiers" class="btn btn-secondary admin-tab-btn">🔑 Verifiers & Accounts</button>
+            <button id="tab-btn-challenges" class="btn btn-secondary admin-tab-btn">⚡ Challenges Monitor</button>
+            <button class="btn btn-danger btn-admin-logout">🚪 Logout (Admin)</button>
+        </div>
+    </div>
+
+    <!-- Telemetry Metric Cards -->
+    <div class="admin-metric-grid">
+        <div class="admin-metric-card">
+            <div class="metric-label">Total Users</div>
+            <div class="admin-metric-num">{{ stats.user_count }}</div>
+            <div class="metric-sub">Enrolled with SCRAM verifiers</div>
+        </div>
+
+        <div class="admin-metric-card">
+            <div class="metric-label">Active Hashed Sessions</div>
+            <div class="admin-metric-num admin-metric-num-green">{{ stats.active_sessions }}</div>
+            <div class="metric-sub">Stored as SHA-256 tokens</div>
+        </div>
+
+        <div class="admin-metric-card">
+            <div class="metric-label">Challenges Issued</div>
+            <div class="admin-metric-num admin-metric-num-cyan">{{ stats.total_challenges }}</div>
+            <div class="metric-sub">{{ stats.consumed_challenges }} consumed atomically</div>
+        </div>
+
+        <div class="admin-metric-card">
+            <div class="metric-label">Locked Accounts</div>
+            <div class="admin-metric-num {% if stats.locked_accounts > 0 %}admin-metric-num-red{% else %}admin-metric-num-green{% endif %}">
+                {{ stats.locked_accounts }}
+            </div>
+            <div class="metric-sub">5-failure brute-force threshold</div>
+        </div>
+    </div>
+</div>
+
+<!-- ==============================================================================
+     TAB 1: THREAT MODEL & STRIDE ANALYSIS MATRIX
+     ============================================================================== -->
+<div id="tab-threats" class="card margin-b-2">
+    <div class="card-header">
+        <h2 class="card-title">🛡️ System Threat Model (STRIDE Methodology)</h2>
+        <p class="card-subtitle">Formal threat classification: Mitigated, Partially Mitigated, and Out-of-Scope boundaries</p>
+    </div>
+
+    <div class="info-banner-cyan">
+        ℹ️ <strong>Threat Identification Methodology:</strong> Evaluates system trust boundaries across Browser Client, TLS Network Transit, Web Application Server, and SQLite Database using Microsoft STRIDE.
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="col-stride">STRIDE Category</th>
+                    <th class="col-threat">Identified Threat</th>
+                    <th class="col-mech">Attack Mechanism</th>
+                    <th class="col-counter">Implemented Countermeasure</th>
+                    <th class="col-status">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge badge-info">S - Spoofing</span></td>
+                    <td class="col-threat">Replay Attack</td>
+                    <td class="col-mech">Attacker sniffs valid authentication proof and resubmits it over the network.</td>
+                    <td class="col-counter">Fresh 128-bit client & server nonces, 60s TTL, single-use atomic consumption in SQLite.</td>
+                    <td><span class="badge badge-success">MITIGATED</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">S - Spoofing</span></td>
+                    <td class="col-threat">Session Fixation</td>
+                    <td class="col-mech">Attacker pre-sets a known session ID on victim before login.</td>
+                    <td class="col-counter">Session regeneration: issuing an unpredictable 256-bit token immediately upon login.</td>
+                    <td><span class="badge badge-success">MITIGATED</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">T - Tampering</span></td>
+                    <td class="col-threat">Transcript Tampering</td>
+                    <td class="col-mech">Attacker modifies username or nonces between handshake steps.</td>
+                    <td class="col-counter">Canonical AuthMessage transcript binding strictly verified via HMAC-SHA256.</td>
+                    <td><span class="badge badge-success">MITIGATED</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">I - Info Disclosure</span></td>
+                    <td class="col-threat">Password Theft in Transit</td>
+                    <td class="col-mech">Plaintext password intercepted on network or in server logs.</td>
+                    <td class="col-counter">Client-side WebCrypto: Plaintext password never transmitted; only PBKDF2-derived verifiers sent.</td>
+                    <td><span class="badge badge-success">MITIGATED</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">I - Info Disclosure</span></td>
+                    <td class="col-threat">Pass-the-Verifier / DB Exfiltration</td>
+                    <td class="col-mech">Attacker steals database and uses stored verifier to authenticate.</td>
+                    <td class="col-counter">SCRAM separation: Database stores StoredKey = SHA256(ClientKey). Proof requires ClientKey.</td>
+                    <td><span class="badge badge-success">MITIGATED</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">I - Info Disclosure</span></td>
+                    <td class="col-threat">Username Enumeration</td>
+                    <td class="col-mech">Probing endpoints to identify valid user accounts via error messages or salt variance.</td>
+                    <td class="col-counter">Deterministic synthetic salts; uniform challenge payload & identical generic 401 failure responses.</td>
+                    <td><span class="badge badge-success">MITIGATED</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">I - Info Disclosure</span></td>
+                    <td class="col-threat">Offline Dictionary Attacks on DB Compromise</td>
+                    <td class="col-mech">Attacker steals database and conducts offline dictionary search against stored verifiers.</td>
+                    <td class="col-counter">100,000 PBKDF2 iterations and Argon2id integrity seal increase attacker cost; weak passwords remain vulnerable to dictionary search.</td>
+                    <td><span class="badge badge-warning">PARTIALLY MITIGATED</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">D - DoS</span></td>
+                    <td class="col-threat">Online Brute-Force & Credential Stuffing</td>
+                    <td class="col-mech">Automated rapid online password guessing against active user accounts.</td>
+                    <td class="col-counter">Failed attempt counters, progressive delays, and temporary 5-minute lockout after 5 failures mitigate online guessing.</td>
+                    <td><span class="badge badge-warning">PARTIALLY MITIGATED</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">E - Privilege Escalation</span></td>
+                    <td class="col-threat">Session Hijacking (XSS Cookie Theft)</td>
+                    <td class="col-mech">Malicious script accesses document.cookie to steal session token.</td>
+                    <td class="col-counter">Cookies configured with HttpOnly, Secure, SameSite=Lax. Token stored as SHA-256 hash.</td>
+                    <td><span class="badge badge-success">MITIGATED</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-secondary">Boundary</span></td>
+                    <td class="col-threat">Client Endpoint Compromise (Keylogger)</td>
+                    <td class="col-mech">Malware, trojans, or compromised browser extensions recording keystrokes on user machine.</td>
+                    <td class="col-counter">Outside application trust model; client environment integrity must be guaranteed by endpoint OS.</td>
+                    <td><span class="badge badge-secondary">OUT OF SCOPE</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-secondary">Boundary</span></td>
+                    <td class="col-threat">TLS Infrastructure MITM / Rogue CA</td>
+                    <td class="col-mech">Adversary controls rogue certificate authority or terminating proxy outside host.</td>
+                    <td class="col-counter">Network transport security relies on platform TLS PKI; mutual ServerProof detects untrusted authentication servers.</td>
+                    <td><span class="badge badge-secondary">OUT OF SCOPE</span></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-secondary">Boundary</span></td>
+                    <td class="col-threat">Quantum Cryptanalysis (Shor's / Grover's)</td>
+                    <td class="col-mech">Future large-scale quantum computers running cryptanalysis against SHA-256 and HMAC.</td>
+                    <td class="col-counter">Classical computational hardness assumptions; post-quantum cryptographic primitives are out of protocol scope.</td>
+                    <td><span class="badge badge-secondary">OUT OF SCOPE</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==============================================================================
+     TAB 2: SERVER VERIFIERS & ENROLLED ACCOUNTS
+     ============================================================================== -->
+<div id="tab-verifiers" class="card margin-b-2 hidden">
+    <div class="card-header">
+        <h2 class="card-title">🔑 Server-Side Stored Verifiers & Accounts</h2>
+        <p class="card-subtitle">Zero Plaintext Passwords &bull; StoredKey = SHA256(ClientKey) &bull; 100,000 PBKDF2 Iterations</p>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Salt (128-bit)</th>
+                    <th>Iterations</th>
+                    <th>StoredKey [SHA256(ClientKey)]</th>
+                    <th>Failures</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td class="cell-mono">#{{ u.id }}</td>
+                    <td class="cell-user">
+                        {{ u.username }}
+                        {% if u.is_admin %}<span class="badge badge-info badge-admin">ADMIN</span>{% endif %}
+                    </td>
+                    <td class="cell-mono-sec">{{ u.salt[:8] }}...{{ u.salt[-8:] }}</td>
+                    <td class="cell-mono-sm">{{ u.iterations }}</td>
+                    <td class="cell-mono-cyan">{{ u.stored_key[:8] }}...{{ u.stored_key[-8:] }}</td>
+                    <td class="cell-mono">{{ u.failed_attempts }}</td>
+                    <td>
+                        {% if u.locked_until %}
+                            <span class="badge badge-failure">LOCKED</span>
+                        {% else %}
+                            <span class="badge badge-success">ACTIVE</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.locked_until or u.failed_attempts > 0 %}
+                            <button class="btn btn-secondary btn-sm-unlock btn-unlock-account" data-user-id="{{ u.id }}">Unlock</button>
+                        {% else %}
+                            <span class="cell-mono-muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==============================================================================
+     TAB 3: EPHEMERAL CHALLENGES MONITOR
+     ============================================================================== -->
+<div id="tab-challenges" class="card margin-b-2 hidden">
+    <div class="card-header">
+        <h2 class="card-title">⚡ Live Ephemeral Challenges & Nonces Monitor</h2>
+        <p class="card-subtitle">Single-use challenges bound to nonces, context, and 60-second expiration</p>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Challenge ID</th>
+                    <th>User Bound</th>
+                    <th>Client Nonce</th>
+                    <th>Server Nonce</th>
+                    <th>TTL / Expiry</th>
+                    <th>Single-Use Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ch in challenges %}
+                <tr>
+                    <td class="cell-mono-muted">{{ ch.id[:8] }}...</td>
+                    <td class="cell-user">{{ ch.username }}</td>
+                    <td class="cell-mono-sec">{{ ch.client_nonce[:8] }}...</td>
+                    <td class="cell-mono-sec">{{ ch.server_nonce[:8] }}...</td>
+                    <td class="cell-mono-sec">60 Seconds</td>
+                    <td>
+                        {% if ch.used == 1 %}
+                            <span class="badge badge-failure">CONSUMED (REPLAY BLOCKED)</span>
+                        {% else %}
+                            <span class="badge badge-success">ACTIVE UNUSED</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/admin.js"></script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard &bull; Secure Authentication Protocol{% endblock %}
+
+{% block content %}
+<div class="card margin-b-2">
+    <div class="card-header dashboard-header-bar">
+        <div>
+            <h1 class="card-title">🛡️ Authenticated Dashboard</h1>
+            <p class="card-subtitle">Active Secure Session &bull; User Identity: <span class="nav-link-admin">{{ current_user.username }}</span></p>
+        </div>
+        <div class="dashboard-btn-group">
+            {% if current_user.role == 'admin' or current_user.is_admin %}
+                <a href="/admin" class="btn btn-primary btn-admin-console">🖥️ Admin Console</a>
+            {% endif %}
+            <a href="/logs" class="btn btn-secondary btn-dashboard-action">Security Logs</a>
+            <button class="btn btn-dashboard-logout nav-link-btn">Logout</button>
+        </div>
+    </div>
+
+    <!-- Active Session Security Overview -->
+    <div class="metric-grid">
+        <div class="metric-box">
+            <div class="metric-label">User Account</div>
+            <div class="metric-val">{{ current_user.username }}</div>
+            <div class="metric-sub">Account ID: #{{ current_user.id }}</div>
+        </div>
+
+        <div class="metric-box">
+            <div class="metric-label">Session Integrity</div>
+            <div class="metric-val metric-val-green">Active & Valid</div>
+            <div class="metric-sub">Stored as SHA-256 Hash</div>
+        </div>
+
+        <div class="metric-box">
+            <div class="metric-label">Idle Timeout</div>
+            <div class="metric-val metric-val-amber">15 Minutes</div>
+            <div class="metric-sub">Refreshed on each request</div>
+        </div>
+
+        <div class="metric-box">
+            <div class="metric-label">Absolute Timeout</div>
+            <div class="metric-val metric-val-cyan">8 Hours</div>
+            <div class="metric-sub">Enforced hard session cutoff</div>
+        </div>
+    </div>
+</div>
+
+<!-- Architecture & Defense Summary -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">⚙️ Active Security Controls & Protections</h2>
+        <p class="card-subtitle">Verified defenses active on this authenticated connection</p>
+    </div>
+
+    <div class="defense-grid">
+        <div class="defense-col-green">
+            <div class="defense-title">Client-Side Password Derivation</div>
+            <p class="defense-desc">
+                The plaintext password was never received by the server. Browser-side WebCrypto derived key material locally using 100,000 PBKDF2 iterations.
+            </p>
+        </div>
+
+        <div class="defense-col-cyan">
+            <div class="defense-title">SCRAM-Style Mutual Authentication</div>
+            <p class="defense-desc">
+                Authentication was bound to fresh 128-bit nonces. Ephemeral challenges are consumed atomically, and mutual verification confirms both client proof and server proof.
+            </p>
+        </div>
+
+        <div class="defense-col-blue">
+            <div class="defense-title">Hashed Token Storage & Cookie Hardening</div>
+            <p class="defense-desc">
+                Database stores only <code class="font-mono-code">SHA256(token)</code>. Session cookies enforce <code class="cell-mono">HttpOnly</code>, <code class="cell-mono">Secure</code>, and <code class="cell-mono">SameSite=Lax</code>.
+            </p>
+        </div>
+
+        <div class="defense-col-amber">
+            <div class="defense-title">Side-Channel & Enumeration Defenses</div>
+            <p class="defense-desc">
+                Proof verification executes via constant-time comparison. Non-existent and locked accounts receive uniform synthetic parameters and identical generic failure responses.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

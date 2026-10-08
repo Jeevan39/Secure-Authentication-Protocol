@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Security Audit Logs &bull; Secure Authentication Protocol{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header dashboard-header-bar">
+        <div>
+            <h1 class="card-title">📜 Security Audit Trail & Event Logs</h1>
+            <p class="card-subtitle">Real-time authentication activity, brute-force tracking, and attack detections</p>
+        </div>
+        <div>
+            <button id="btn-refresh-logs" class="btn btn-secondary btn-dashboard-action">🔄 Refresh Logs</button>
+        </div>
+    </div>
+
+    <div class="info-banner-blue">
+        ℹ️ <strong>Privacy & Security Note:</strong> Logs record operational events, timestamps, and client IP addresses for brute-force rate-limiting. Plaintext passwords, authentication proofs, and raw session tokens are strictly excluded from logging.
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Username Attempted</th>
+                    <th>Security Event</th>
+                    <th>Outcome</th>
+                    <th>Client IP</th>
+                </tr>
+            </thead>
+            <tbody id="logs-tbody">
+                <tr>
+                    <td colspan="5" class="table-empty-cell">Loading audit trail...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/logs.js"></script>
+{% endblock %}

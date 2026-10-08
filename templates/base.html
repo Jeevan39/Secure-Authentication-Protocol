@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Secure Authentication Protocol{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="nav-brand">
+            <span>🛡️</span>
+            <span>Secure Authentication Protocol</span>
+            <span class="nav-badge">v1.0</span>
+        </a>
+        <ul class="nav-links">
+            {% if current_user %}
+                <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+                <li><a href="/logs" class="nav-link">Security Logs</a></li>
+                {% if current_user.role == 'admin' or current_user.is_admin %}
+                    <li><a href="/admin" class="nav-link nav-link-admin">Admin Console</a></li>
+                {% endif %}
+                <li><button class="nav-link btn-nav-logout">Logout ({{ current_user.username }})</button></li>
+            {% else %}
+                <li><a href="/login" class="nav-link">Login</a></li>
+                <li><a href="/register" class="nav-link">Register</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div>Design and Analysis of a Secure Authentication Protocol &bull; Educational Security Environment</div>
+    </footer>
+
+    <script src="/static/js/base.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

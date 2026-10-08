@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Login &bull; Secure Authentication Protocol{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card">
+        <div class="card-header">
+            <h1 class="card-title">🔐 Secure Authentication</h1>
+            <p class="card-subtitle">Challenge-Response Authentication Protocol</p>
+        </div>
+
+        <div id="alert-box" class="alert hidden"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" id="username" class="form-input" required autocomplete="username" placeholder="e.g. alice">
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" class="form-input" required autocomplete="current-password" placeholder="••••••••••••">
+                <div class="form-helper">SCRAM-style challenge-response: Plaintext password is never transmitted.</div>
+            </div>
+
+            <button type="submit" id="btn-login" class="btn btn-primary">
+                <span>Sign In</span>
+                <span id="spinner" class="hidden">⏳</span>
+            </button>
+        </form>
+
+        <div class="auth-switch-note">
+            Don't have an account? <a href="/register" class="auth-switch-link">Register here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/authentication.js"></script>
+<script src="/static/js/login.js"></script>
+{% endblock %}
